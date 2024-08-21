@@ -49,7 +49,7 @@ on:
           - gitlab
           - jenkins
           - argocd
-          - terraform
+          - terraform  
 
 jobs:
   create-instance:

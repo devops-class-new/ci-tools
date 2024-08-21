@@ -1,0 +1,130 @@
+name: Create and Configure Cloud Instance
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        description: 'Select the cloud provider'
+        required: true
+        type: choice
+        options:
+          - aws
+          - gcp
+          - azure
+      aws_access_key_id:
+        description: 'AWS Access Key ID (only for AWS)'
+        required: false
+        type: string
+      aws_secret_access_key:
+        description: 'AWS Secret Access Key (only for AWS)'
+        required: false
+        type: string
+      gcp_service_account_key:
+        description: 'GCP Service Account Key JSON (only for GCP)'
+        required: false
+        type: string
+      azure_client_id:
+        description: 'Azure Client ID (only for Azure)'
+        required: false
+        type: string
+      azure_client_secret:
+        description: 'Azure Client Secret (only for Azure)'
+        required: false
+        type: string
+      azure_tenant_id:
+        description: 'Azure Tenant ID (only for Azure)'
+        required: false
+        type: string
+      azure_subscription_id:
+        description: 'Azure Subscription ID (only for Azure)'
+        required: false
+        type: string
+      environment:
+        description: 'Select the environment or tool'
+        required: true
+        type: choice
+        options:
+          - ansible
+          - kubernetes
+          - gitlab
+          - jenkins
+          - argocd
+          - terraform
+
+jobs:
+  create-instance:
+    name: Create Cloud Instance and Configure Environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # AWS-specific steps
+      - name: Install Ansible and AWS Collection
+        if: ${{ github.event.inputs.cloud_provider == 'aws' && github.event.inputs.environment == 'ansible' }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible boto3 botocore
+          ansible-galaxy collection install amazon.aws
+
+      - name: Run AWS Ansible Playbook
+        if: ${{ github.event.inputs.cloud_provider == 'aws' && github.event.inputs.environment == 'ansible' }}
+        run: |
+          ansible-playbook IaC/Ansible/create_ec2_configure_user.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.event.inputs.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.event.inputs.aws_secret_access_key }}
+          AWS_REGION: us-west-2
+
+      # GCP-specific steps
+      - name: Authenticate GCP
+        if: ${{ github.event.inputs.cloud_provider == 'gcp' }}
+        run: |
+          echo "${{ github.event.inputs.gcp_service_account_key }}" > "${{ runner.temp }}/gcp-key.json"
+          gcloud auth activate-service-account --key-file="${{ runner.temp }}/gcp-key.json"
+
+      - name: GCP Deployment (Placeholder)
+        if: ${{ github.event.inputs.cloud_provider == 'gcp' }}
+        run: echo "Deploying to GCP..."
+
+      # Azure-specific steps
+      - name: Authenticate Azure
+        if: ${{ github.event.inputs.cloud_provider == 'azure' }}
+        run: |
+          az login --service-principal -u ${{ github.event.inputs.azure_client_id }} -p ${{ github.event.inputs.azure_client_secret }} --tenant ${{ github.event.inputs.azure_tenant_id }}
+          az account set --subscription ${{ github.event.inputs.azure_subscription_id }}
+
+      - name: Azure Deployment (Placeholder)
+        if: ${{ github.event.inputs.cloud_provider == 'azure' }}
+        run: echo "Deploying to Azure..."
+
+      # Kubernetes Deployment (Placeholder)
+      - name: Kubernetes Deployment
+        if: ${{ github.event.inputs.environment == 'kubernetes' }}
+        run: echo "Deploying to Kubernetes..."
+
+      # GitLab CI/CD Job (Placeholder)
+      - name: GitLab CI/CD Job
+        if: ${{ github.event.inputs.environment == 'gitlab' }}
+        run: echo "Running GitLab CI/CD Job..."
+
+      # Jenkins Job (Placeholder)
+      - name: Jenkins Job
+        if: ${{ github.event.inputs.environment == 'jenkins' }}
+        run: echo "Running Jenkins Job..."
+
+      # ArgoCD Deployment (Placeholder)
+      - name: ArgoCD Deployment
+        if: ${{ github.event.inputs.environment == 'argocd' }}
+        run: echo "Deploying with ArgoCD..."
+
+      # Terraform Provisioning (Placeholder)
+      - name: Terraform Provisioning
+        if: ${{ github.event.inputs.environment == 'terraform' }}
+        run: echo "Provisioning infrastructure with Terraform..."

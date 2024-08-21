@@ -8,10 +8,21 @@
     image_id: ami-12345678  # Replace with a valid AMI ID
     region: "{{ lookup('env', 'AWS_REGION') }}"
     security_group: my-security-group
-    subnet_id: subnet-12345678  # Replace with your subnet ID
     instance_count: 1
 
   tasks:
+    - name: Get default VPC ID
+      amazon.aws.ec2_vpc_info:
+        region: "{{ region }}"
+      register: vpc_info
+
+    - name: Get default subnet IDs
+      amazon.aws.ec2_subnet_info:
+        region: "{{ region }}"
+        filters:
+          vpc_id: "{{ vpc_info.vpcs[0].id }}"
+      register: subnet_info
+
     - name: Launch EC2 instances
       amazon.aws.ec2_instance:
         key_name: "{{ key_name }}"
@@ -19,7 +30,7 @@
         image_id: "{{ image_id }}"
         region: "{{ region }}"
         security_groups: "{{ security_group }}"
-        subnet_id: "{{ subnet_id }}"
+        subnet_id: "{{ subnet_info.subnets[0].id }}"  # Use the first available subnet ID
         wait: yes
         count: "{{ instance_count }}"
         tags:

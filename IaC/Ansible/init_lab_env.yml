@@ -1,5 +1,5 @@
 ---
-- name: Create AWS EC2 instances and configure users
+- name: Create AWS EC2 instances
   hosts: localhost
   gather_facts: no
   vars:
@@ -10,8 +10,6 @@
     security_group: my-security-group
     subnet_id: subnet-12345678  # Replace with your subnet ID
     instance_count: 1
-    user_name: newuser
-    user_public_key: ssh-rsa AAAAB3Nz...
 
   tasks:
     - name: Launch EC2 instances
@@ -42,25 +40,29 @@
         hostname: "{{ item.public_ip_address }}"
         groupname: aws_instances
       with_items: "{{ ec2_info.instances }}"
+  
+- name: Configure users on EC2 instances
+  hosts: aws_instances
+  become: yes
+  vars:
+    user_name: newuser
+    user_public_key: ssh-rsa AAAAB3Nz...  # Replace with the actual SSH public key
 
-    - name: Configure users on EC2 instances
-      hosts: aws_instances
-      become: yes
-      tasks:
-        - name: Create a new user
-          ansible.builtin.user:
-            name: "{{ user_name }}"
-            state: present
-            shell: /bin/bash
+  tasks:
+    - name: Create a new user
+      ansible.builtin.user:
+        name: "{{ user_name }}"
+        state: present
+        shell: /bin/bash
 
-        - name: Add SSH key for the user
-          ansible.builtin.authorized_key:
-            user: "{{ user_name }}"
-            key: "{{ user_public_key }}"
+    - name: Add SSH key for the user
+      ansible.builtin.authorized_key:
+        user: "{{ user_name }}"
+        key: "{{ user_public_key }}"
 
-        - name: Add the user to the sudoers file
-          ansible.builtin.lineinfile:
-            path: /etc/sudoers
-            state: present
-            regexp: "^{{ user_name }} "
-            line: "{{ user_name }} ALL=(ALL) NOPASSWD:ALL"
+    - name: Add the user to the sudoers file
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: "^{{ user_name }} "
+        line: "{{ user_name }} ALL=(ALL) NOPASSWD:ALL"

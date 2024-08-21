@@ -76,11 +76,11 @@ jobs:
       - name: Run AWS Ansible Playbook
         if: ${{ github.event.inputs.cloud_provider == 'aws' && github.event.inputs.environment == 'ansible' }}
         run: |
-          ansible-playbook IaC/Ansible/create_ec2_configure_user.yml
+          ansible-playbook IaC/Ansible/init_lab_env.yml
         env:
           AWS_ACCESS_KEY_ID: ${{ github.event.inputs.aws_access_key_id }}
           AWS_SECRET_ACCESS_KEY: ${{ github.event.inputs.aws_secret_access_key }}
-          AWS_REGION: us-west-2
+          AWS_REGION: us-east-1
 
       # GCP-specific steps
       - name: Authenticate GCP

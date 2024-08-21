@@ -22,7 +22,7 @@
         subnet_id: "{{ subnet_id }}"
         wait: yes
         count: "{{ instance_count }}"
-        instance_tags:
+        tags:
           Name: Ansible-Created-Instance
       register: ec2
 
@@ -40,7 +40,7 @@
         hostname: "{{ item.public_ip_address }}"
         groupname: aws_instances
       with_items: "{{ ec2_info.instances }}"
-  
+
 - name: Configure users on EC2 instances
   hosts: aws_instances
   become: yes
